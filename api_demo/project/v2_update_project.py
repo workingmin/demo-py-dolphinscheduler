@@ -1,48 +1,28 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
-import requests
+from common.api.project_api import ProjectAPI
+from common.utils.config_util import load_config
 
-
-if __name__ == '__main__':
-    server_url = os.getenv('DOLPHINSCHEDULER_SERVER_URL')
-    user_token = os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
-    
+def main():
     if len(sys.argv) < 2:
         print("Usage: {} <project-code>".format(sys.argv[0]))
         sys.exit(1)
     
     project_code = sys.argv[1]
+    
+    # 加载配置
+    server_url, user_token = load_config()
+    
+    # 初始化API客户端
+    api = ProjectAPI(server_url, user_token)
+    
+    # 更新项目 (v2)
+    updated_project = api.update_project(project_code, "pro123", "this is a project", version="v2")
+    print(updated_project)
 
-    url = os.path.join(server_url, 'v2', 'projects', project_code)
-    headers = {
-        'Content-Type': 'application/json',
-        'token': user_token
-        }
-    data = {
-        "projectName": "pro123",
-        "description": "this is a project"
-        }
-            
-    try:
-        response = requests.put(url, headers=headers, json=data)
-        response.raise_for_status()
-        json_data = response.json()
-    except Exception as e:
-        print(f'Request failed, error: {e}')
-        sys.exit(1)
-        
-    json_data = response.json()
-    success = json_data.get('success')
-    failed = json_data.get('failed')
-    if (not success) or failed:
-        code = json_data.get('code')
-        msg = json_data.get('msg')
-        print(f'Update failed, code: {code}, msg: {msg}')
-        sys.exit(1)
-        
-    data = json_data.get('data')
-    print(data)
+
+if __name__ == '__main__':
+    main()
     
