@@ -1,23 +1,39 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from common.api.project_api import ProjectAPI
-from common.utils.config_util import load_config
+from common.exceptions import APIException
+
+def format_project(project: dict) -> str:
+    return "{:<10} {:<20} {:<30}".format(project['id'], project['code'], project['name'])
 
 def main():
-    # 加载配置
-    server_url, user_token = load_config()
+    try:
+        # 初始化API客户端
+        api = ProjectAPI()
 
-    # 初始化API客户端
-    api = ProjectAPI(server_url, user_token)
-
-    # 查询用户项目 (v2版本)
-    user_projects = api.list_user_projects(version="v2")
+        # 查询用户项目 (v2版本)
+        user_projects = api.list_user_projects(version="v2")
+        
+        print("\nAuthorized and User-Created Projects (v2):")
+        print("{:<10} {:<20} {:<30}".format("ID", "Code", "Project Name"))
+        print("-" * 60)
+        for project in user_projects:
+            print(format_project(project))
+            
+    except APIException as e:
+        print(f"Error fetching projects: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
     
-    print("All projects:")
-    for project in user_projects:
-        print(f"- {project['id']}: {project['name']}")
-
 
 if __name__ == '__main__':
     main()

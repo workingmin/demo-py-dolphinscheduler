@@ -6,6 +6,7 @@ import requests
 from urllib.parse import urljoin
 from common.exceptions import APIRequestError, APIResponseError
 from typing import Dict, Optional, Any
+import dotenv
 
 class BaseAPI:
     def __init__(self, server_url: Optional[str] = None, user_token: Optional[str] = None):
@@ -16,6 +17,9 @@ class BaseAPI:
             server_url: DolphinScheduler server URL
             user_token: User authentication token
         """
+        # Load .env file if exists
+        dotenv.load_dotenv()
+        
         self.server_url = server_url or os.getenv('DOLPHINSCHEDULER_SERVER_URL')
         self.user_token = user_token or os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
         self.headers = {'token': self.user_token} if self.user_token else {}
@@ -98,3 +102,81 @@ class BaseAPI:
             )
         
         return response.get('data')
+    
+    def _post_request(self, endpoint: str,
+                      params: Optional[Dict] = None, 
+                      json_data: Optional[Dict] = None, 
+                      operation_name: str = "Operation") -> Dict:
+        """
+        Internal method for POST requests
+        
+        Args:
+            endpoint: API endpoint
+            params: Query parameters
+            json_data: JSON payload
+            operation_name: Operation name for error messages
+        
+        Returns:
+            Response data
+        """
+        try:
+            response = self._request('POST', endpoint, params=params, json_data=json_data)
+            return self._handle_response(response, operation_name)
+        except (APIRequestError, APIResponseError) as e:
+            raise type(e)(f"{operation_name} failed: {str(e)}") from e
+
+    def _get_request(self, endpoint: str, operation_name: str = "Operation") -> Dict:
+        """
+        Internal method for GET requests
+        
+        Args:
+            endpoint: API endpoint
+            operation_name: Operation name for error messages
+        
+        Returns:
+            Response data
+        """
+        try:
+            response = self._request('GET', endpoint)
+            return self._handle_response(response, operation_name)
+        except (APIRequestError, APIResponseError) as e:
+            raise type(e)(f"{operation_name} failed: {str(e)}") from e
+
+    def _put_request(self, endpoint: str, 
+                     params: Optional[Dict] = None, 
+                     json_data: Optional[Dict] = None, 
+                     operation_name: str = "Operation") -> Dict:
+        """
+        Internal method for PUT requests
+        
+        Args:
+            endpoint: API endpoint
+            params: Query parameters
+            json_data: JSON payload
+            operation_name: Operation name for error messages
+        
+        Returns:
+            Response data
+        """
+        try:
+            response = self._request('PUT', endpoint, params=params, json_data=json_data)
+            return self._handle_response(response, operation_name)
+        except (APIRequestError, APIResponseError) as e:
+            raise type(e)(f"{operation_name} failed: {str(e)}") from e
+
+    def _delete_request(self, endpoint: str, operation_name: str = "Operation") -> Dict:
+        """
+        Internal method for DELETE requests
+        
+        Args:
+            endpoint: API endpoint
+            operation_name: Operation name for error messages
+        
+        Returns:
+            Response data
+        """
+        try:
+            response = self._request('DELETE', endpoint)
+            return self._handle_response(response, operation_name)
+        except (APIRequestError, APIResponseError) as e:
+            raise type(e)(f"{operation_name} failed: {str(e)}") from e

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from common.api.base_api import BaseAPI
-from common.exceptions import APIRequestError, APIResponseError
 from typing import Dict, List, Optional, Union
 
 class ProjectAPI(BaseAPI):
@@ -119,81 +118,3 @@ class ProjectAPI(BaseAPI):
         """
         endpoint = f"{version}/projects/created-and-authed" if version == "v2" else "projects/created-and-authed"
         return self._get_request(endpoint, "List user projects")
-
-    def _post_request(self, endpoint: str,
-                      params: Optional[Dict] = None, 
-                      json_data: Optional[Dict] = None, 
-                      operation_name: str = "Operation") -> Dict:
-        """
-        Internal method for POST requests
-        
-        Args:
-            endpoint: API endpoint
-            params: Query parameters
-            json_data: JSON payload
-            operation_name: Operation name for error messages
-        
-        Returns:
-            Response data
-        """
-        try:
-            response = self._request('POST', endpoint, params=params, json_data=json_data)
-            return self._handle_response(response, operation_name)
-        except (APIRequestError, APIResponseError) as e:
-            raise type(e)(f"{operation_name} failed: {str(e)}") from e
-
-    def _get_request(self, endpoint: str, operation_name: str = "Operation") -> Dict:
-        """
-        Internal method for GET requests
-        
-        Args:
-            endpoint: API endpoint
-            operation_name: Operation name for error messages
-        
-        Returns:
-            Response data
-        """
-        try:
-            response = self._request('GET', endpoint)
-            return self._handle_response(response, operation_name)
-        except (APIRequestError, APIResponseError) as e:
-            raise type(e)(f"{operation_name} failed: {str(e)}") from e
-
-    def _put_request(self, endpoint: str, 
-                     params: Optional[Dict] = None, 
-                     json_data: Optional[Dict] = None, 
-                     operation_name: str = "Operation") -> Dict:
-        """
-        Internal method for PUT requests
-        
-        Args:
-            endpoint: API endpoint
-            params: Query parameters
-            json_data: JSON payload
-            operation_name: Operation name for error messages
-        
-        Returns:
-            Response data
-        """
-        try:
-            response = self._request('PUT', endpoint, params=params, json_data=json_data)
-            return self._handle_response(response, operation_name)
-        except (APIRequestError, APIResponseError) as e:
-            raise type(e)(f"{operation_name} failed: {str(e)}") from e
-
-    def _delete_request(self, endpoint: str, operation_name: str = "Operation") -> Dict:
-        """
-        Internal method for DELETE requests
-        
-        Args:
-            endpoint: API endpoint
-            operation_name: Operation name for error messages
-        
-        Returns:
-            Response data
-        """
-        try:
-            response = self._request('DELETE', endpoint)
-            return self._handle_response(response, operation_name)
-        except (APIRequestError, APIResponseError) as e:
-            raise type(e)(f"{operation_name} failed: {str(e)}") from e
