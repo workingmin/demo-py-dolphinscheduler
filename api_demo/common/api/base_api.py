@@ -125,19 +125,22 @@ class BaseAPI:
         except (APIRequestError, APIResponseError) as e:
             raise type(e)(f"{operation_name} failed: {str(e)}") from e
 
-    def _get_request(self, endpoint: str, operation_name: str = "Operation") -> Dict:
+    def _get_request(self, endpoint: str, 
+                     params: Optional[Dict] = None, 
+                     operation_name: str = "Operation") -> Dict:
         """
         Internal method for GET requests
         
         Args:
             endpoint: API endpoint
+            params: Query parameters
             operation_name: Operation name for error messages
         
         Returns:
             Response data
         """
         try:
-            response = self._request('GET', endpoint)
+            response = self._request('GET', endpoint, params=params)
             return self._handle_response(response, operation_name)
         except (APIRequestError, APIResponseError) as e:
             raise type(e)(f"{operation_name} failed: {str(e)}") from e

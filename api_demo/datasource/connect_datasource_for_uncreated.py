@@ -1,49 +1,38 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
-import requests
+import os
 import yaml
 
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-if __name__ == '__main__':
-    server_url = os.getenv('DOLPHINSCHEDULER_SERVER_URL')
-    user_token = os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
-    
+from common.api.datasource_api import DatasourceAPI
+from common.exceptions import APIException
+
+def main():
     if len(sys.argv) < 2:
         print("Usage: {} <datasource-param.yaml>".format(sys.argv[0]))
         sys.exit(1)
-        
+
     with open(sys.argv[1], 'r') as f:
         datasource_param = yaml.safe_load(f)
-        
-    url = os.path.join(server_url, 'datasources', 'connect')
-    headers = {
-        'Content-Type': 'application/json',
-        'token': user_token
-        }
-    
-    data = datasource_param
     
     try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        json_data = response.json()
-    except Exception as e:
-        print(f'Request failed, error: {e}')
-        sys.exit(1)
+        # 初始化API客户端
+        api = DatasourceAPI()
         
-    success = json_data.get('success')
-    failed = json_data.get('failed')
-    if (not success) or failed:
-        code = json_data.get('code')
-        msg = json_data.get('msg')
-        print(f'Connect failed, code: {code}, msg: {msg}')
+        # 测试数据源配置连接
+        result = api.connect_datasource(datasource_param)
+        print(result)
+        
+    except APIException as e:
+        print(f"Error testing datasource connection: {e}")
         sys.exit(1)
-    
-    data = json_data.get('data')
-    if data:
-        print('Connect datasource success')
-    else:
-        print('Connect datasource failure')
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

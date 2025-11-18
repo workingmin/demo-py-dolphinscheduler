@@ -21,6 +21,7 @@ class ConnectorType(IntEnum):
 class RuleType(Enum):
     SINGLE_TABLE = (0, "single_table")
     
+    # 枚举构造方法，初始化代码值和描述信息
     def __init__(self, code, description):
         self.code = code
         self.description = description
@@ -124,11 +125,11 @@ def build_trnio_sql(rule_id, rule_input_parameter):
         return None
  
     unique_code, task_unique_code = generate_unique_code(
-        rule_input_parameter['src_table'],
+        rule_input_parameter.get('src_table'),
         src_connector_type,
-        rule_input_parameter['src_datasource_id'],
-        rule_input_parameter['src_field'],
-        rule_input_parameter['src_database'],
+        rule_input_parameter.get('src_datasource_id'),
+        rule_input_parameter.get('src_field'),
+        rule_input_parameter.get('src_database'),
         rule_id,
         rule.statistics_name,
         rule_input_parameter.get('src_filter')
@@ -166,8 +167,9 @@ def build_trnio_sql(rule_id, rule_input_parameter):
         Rule.UNIQUENESS_CHECK.id: lambda: (
             f"CREATE TABLE IF NOT EXISTS {env_vars['dest_catalog']}.{env_vars['dest_database']}.{output_items_table} "
             f"AS SELECT {rule_input_parameter['src_field']} FROM {rule_input_parameter['src_catalog']}.{rule_input_parameter['src_database']}."
-            f"{rule_input_parameter['src_table']} GROUP BY {rule_input_parameter['src_field']} HAVING COUNT(*) > 1"
-            f"{' AND (' + rule_input_parameter.get('src_filter') + ')' if rule_input_parameter.get('src_filter') else ''};\n"
+            f"{rule_input_parameter['src_table']} "
+            f"{' WHERE (' + rule_input_parameter.get('src_filter') + ') ' if rule_input_parameter.get('src_filter') else ''}"
+            f"GROUP BY {rule_input_parameter['src_field']} HAVING COUNT(*) > 1;\n"
             f"CREATE TABLE IF NOT EXISTS {env_vars['dest_catalog']}.{env_vars['dest_database']}.{output_count_table} "
             f"AS SELECT COUNT(*) AS {rule.field_alias} "
             f"FROM {env_vars['dest_catalog']}.{env_vars['dest_database']}.{output_items_table};\n"

@@ -1,49 +1,40 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
-import requests
+import os
 
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from common.api.datasource_api import DatasourceAPI
+from common.exceptions import APIException
+
+def main():
+    try:
+        # 初始化API客户端
+        api = DatasourceAPI()
+        
+        # 创建数据源
+        result = api.create_datasource(
+            datasource_type="MYSQL",
+            name="txx",
+            host="localhost",
+            port=3306,
+            username="root",
+            password="xxx",
+            database="ds",
+            note="",
+            other={"serverTimezone": "GMT-8"}
+        )
+        print(result)
+        
+    except APIException as e:
+        print(f"Error creating datasource: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
-    server_url = os.getenv('DOLPHINSCHEDULER_SERVER_URL')
-    user_token = os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
-    
-    url = os.path.join(server_url, 'datasources')
-    headers = {
-        'Content-Type': 'application/json',
-        'token': user_token
-        }
-    data = {
-        "type": "MYSQL",
-        "name": "txx",
-        "note": "",
-        "host": "localhost",
-        "port": 3306,
-        "userName": "root",
-        "password": "xxx",
-        "database": "ds",
-        "other": {
-            "serverTimezone":"GMT-8"
-            },
-        }
-        
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        json_data = response.json()
-    except Exception as e:
-        print(f'Request failed, error: {e}')
-        sys.exit(1)
-
-    success = json_data.get('success')
-    failed = json_data.get('failed')
-    if (not success) or failed:
-        code = json_data.get('code')
-        msg = json_data.get('msg')
-        print(f'Create failed, code: {code}, msg: {msg}')
-        sys.exit(1)
-        
-    data = json_data.get('data')
-    print(data)
+    main()

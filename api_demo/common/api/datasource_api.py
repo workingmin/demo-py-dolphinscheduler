@@ -20,7 +20,7 @@ class DatasourceAPI(BaseAPI):
         
         Args:
             datasource_type: Type of datasource (e.g. MYSQL)
-            name: Datasource name
+            name: Datasource name (must be unique)
             host: Database host
             port: Database port
             username: Database username
@@ -30,7 +30,7 @@ class DatasourceAPI(BaseAPI):
             other: Additional connection parameters
             
         Returns:
-            Created datasource data
+            Created datasource data with ID
         """
         endpoint = "datasources"
         json_data = {
@@ -51,13 +51,13 @@ class DatasourceAPI(BaseAPI):
         Get datasource information by ID
         
         Args:
-            datasource_id: Datasource identifier
+            datasource_id: Datasource identifier (numeric ID or string)
             
         Returns:
-            Datasource information
+            Datasource details including type, connection info, etc.
         """
         endpoint = f"datasources/{datasource_id}"
-        return self._get_request(endpoint, f"Query datasource {datasource_id}")
+        return self._get_request(endpoint, operation_name=f"Query datasource {datasource_id}")
 
     def update_datasource(self, 
                          datasource_id: Union[str, int],
@@ -110,77 +110,129 @@ class DatasourceAPI(BaseAPI):
             datasource_id: Datasource identifier
             
         Returns:
-            Delete operation result
+            Delete operation result with success status
         """
         endpoint = f"datasources/{datasource_id}"
-        return self._delete_request(endpoint, f"Delete datasource {datasource_id}")
+        return self._delete_request(endpoint, operation_name=f"Delete datasource {datasource_id}")
 
     def list_datasources_by_type(self, datasource_type: str) -> List[Dict]:
         """
         List datasources by database type
         
         Args:
-            datasource_type: Type of datasource (e.g. MYSQL)
+            datasource_type: Type of datasource (e.g. MYSQL, POSTGRESQL)
             
         Returns:
-            List of datasources
+            List of datasources with basic info
         """
-        endpoint = f"datasources/list/{datasource_type}"
-        return self._get_request(endpoint, f"List {datasource_type} datasources")
+        endpoint = "datasources/list"
+        params = {"type": datasource_type}
+        return self._get_request(endpoint, params=params, operation_name=f"List {datasource_type} datasources")
 
-    def verify_datasource(self, datasource_id: Union[str, int]) -> Dict:
+    def connect_test_datasource(self, datasource_id: Union[str, int]) -> Dict:
         """
-        Verify datasource connection
+        Test connection to a datasource
         
         Args:
             datasource_id: Datasource identifier
             
         Returns:
-            Verification result
+            Connection test result with success status
         """
-        endpoint = f"datasources/{datasource_id}/verify"
-        return self._get_request(endpoint, f"Verify datasource {datasource_id}")
+        endpoint = f"datasources/{datasource_id}/connect-test"
+        return self._get_request(endpoint, operation_name=f"Test connection for datasource {datasource_id}")
 
-    def get_datasource_databases(self, datasource_id: Union[str, int]) -> List[str]:
+    def connect_datasource(self, datasource_param: Dict) -> Dict:
         """
-        Get databases available in datasource
+        Test connection to a datasource with provided parameters
         
         Args:
-            datasource_id: Datasource identifier
-            
+            datasource_param: Complete datasource parameters including:
+                - type: Database type (e.g. MYSQL, POSTGRESQL)
+                - name: Datasource name (optional for connection test)
+                - host: Database host
+                - port: Database port
+                - userName: Database username
+                - password: Database password
+                - database: Database name
+                - other: Additional connection parameters
+                
         Returns:
-            List of database names
+            Connection test result with success status and detailed error information if failed
         """
-        endpoint = f"datasources/{datasource_id}/databases"
-        return self._get_request(endpoint, f"Get databases for datasource {datasource_id}")
+        endpoint = "datasources/connect"
+        return self._post_request(endpoint, json_data=datasource_param, operation_name="Test datasource connection")
 
-    def get_datasource_tables(self, datasource_id: Union[str, int], database_name: str) -> List[str]:
+    def verify_datasource_name(self, name: str) -> Dict:
         """
-        Get tables in a database
+        Verify if a datasource name is available
         
         Args:
-            datasource_id: Datasource identifier
-            database_name: Database name
+            name: Datasource name to verify
             
         Returns:
-            List of table names
+            Dictionary with verification result and availability status
         """
-        endpoint = f"datasources/{datasource_id}/tables"
-        params = {"database": database_name}
-        return self._get_request(endpoint, f"Get tables for database {database_name}", params=params)
+        endpoint = "datasources/verify-name"
+        params = {"name": name}
+        return self._get_request(endpoint, params=params, operation_name=f"Verify datasource name '{name}'")
 
-    def get_table_columns(self, datasource_id: Union[str, int], database_name: str, table_name: str) -> List[Dict]:
+    def list_databases(self, datasource_id: Union[str, int]) -> List[str]:
         """
-        Get columns in a table
+        List all databases available in the datasource
         
         Args:
-            datasource_id: Datasource identifier
-            database_name: Database name
-            table_name: Table name
+            datasource_id: ID of the datasource (can be string or integer)
             
         Returns:
-            List of column definitions
+            List of database names with additional metadata
+            
+        Raises:
+            APIError: If the request fails or datasource doesn't exist
         """
-        endpoint = f"datasources/{datasource_id}/columns"
-        params = {"database": database_name, "table": table_name}
-        return self._get_request(endpoint, f"Get columns for table {table_name}", params=params)
+        endpoint = "datasources/databases"
+        params = {"datasourceId": datasource_id}
+        return self._get_request(endpoint, params=params, operation_name=f"List databases for datasource {datasource_id}")
+    def list_tables(self, datasource_id: Union[str, int], database_name: str) -> List[Dict]:
+        """
+        List all tables in a specific database of the datasource
+        
+        Args:
+            datasource_id: ID of the datasource (can be string or integer)
+            database_name: Name of the database to query
+            
+        Returns:
+            List of table names with additional metadata
+            
+        Raises:
+            APIError: If the请求失败或数据源/数据库不存在
+        """
+        endpoint = "datasources/tables"
+        params = {
+            "datasourceId": datasource_id,
+            "database": database_name
+        }
+        return self._get_request(endpoint, params=params, operation_name=f"List tables in {database_name}")
+
+    def list_columns(self, datasource_id: Union[str, int], database_name: str, table_name: str) -> List[Dict]:
+        """
+        List all columns of a specific table
+        
+        Args:
+            datasource_id: ID of the datasource (can be string or integer)
+            database_name: Name of the database containing the table
+            table_name: Name of the table to inspect
+            
+        Returns:
+            List of column definitions with detailed metadata
+            
+        Raises:
+            APIError: If the request fails or table doesn't exist
+        """
+        endpoint = "datasources/tableColumns"
+        params = {
+            "datasourceId": datasource_id,
+            "database": database_name,
+            "tableName": table_name
+        }
+        return self._get_request(endpoint, params=params, operation_name=f"List columns in table {table_name}")

@@ -1,42 +1,35 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
-import requests
+import os
 
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-if __name__ == '__main__':
-    server_url = os.getenv('DOLPHINSCHEDULER_SERVER_URL')
-    user_token = os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
-    
+from common.api.datasource_api import DatasourceAPI
+from common.exceptions import APIException
+
+def main():
     if len(sys.argv) < 2:
         print("Usage: {} <datasource-name>".format(sys.argv[0]))
         sys.exit(1)
-        
+            
     datasource_name = sys.argv[1]
-
-    url = os.path.join(server_url, 'datasources', 'verify-name')
-    headers = {'token': user_token}
-    params = {
-        "name": datasource_name,
-    }
     
     try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        json_data = response.json()
-    except Exception as e:
-        print(f'Request failed, error: {e}')
-        sys.exit(1)    
+        # 初始化API客户端
+        api = DatasourceAPI()
         
-    success = json_data.get('success')
-    failed = json_data.get('failed')
-    if (not success) or failed:
-        code = json_data.get('code')
-        msg = json_data.get('msg')
-        print(f'Verify failed, code: {code}, msg: {msg}')
+        name_exists = api.verify_datasource_name(datasource_name)
+        print(f"Datasource name '{datasource_name}' exists: {not name_exists}")
+        
+    except APIException as e:
+        print(f"Error verifying datasource name: {e}")
         sys.exit(1)
-        
-    data = json_data.get('data')
-    print(f"Verifie {data}, data source name does not exist")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

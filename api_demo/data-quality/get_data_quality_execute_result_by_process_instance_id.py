@@ -14,10 +14,13 @@ if __name__ == '__main__':
     user_token = os.getenv('DOLPHINSCHEDULER_USER_TOKEN')
     
     if len(sys.argv) < 2:
-        print("Usage: {} <process-instance-id>".format(sys.argv[0]))
+        print("Usage: {} <process-instance-id> [task-name]".format(sys.argv[0]))
         sys.exit(1)
         
     process_instance_id = sys.argv[1]
+    task_name = None
+    if len(sys.argv) >= 3:
+        task_name = sys.argv[2]
 
     url = os.path.join(server_url, 'data-quality', 'result', 'page')
     headers = {'token': user_token}
@@ -35,6 +38,8 @@ if __name__ == '__main__':
             "pageNo": page_no,
             "pageSize": PAGE_SIZE,
         }
+        if task_name:
+            params['searchVal'] = task_name
         
         try:
             response = requests.get(url, headers=headers, params=params)

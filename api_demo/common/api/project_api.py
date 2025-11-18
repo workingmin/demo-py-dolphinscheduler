@@ -41,7 +41,7 @@ class ProjectAPI(BaseAPI):
             Project information
         """
         endpoint = f"{version}/projects/{project_code}" if version == "v2" else f"projects/{project_code}"
-        return self._get_request(endpoint, f"Query project {project_code}")
+        return self._get_request(endpoint, operation_name=f"Query project {project_code}")
 
     def delete_project(self, project_code: Union[str, int], version: str = "v1") -> Dict:
         """
@@ -104,7 +104,7 @@ class ProjectAPI(BaseAPI):
             List of all projects
         """
         endpoint = f"{version}/projects/list" if version == "v2" else "projects/list"
-        return self._get_request(endpoint, "List all projects")
+        return self._get_request(endpoint, operation_name="List all projects")
 
     def list_user_projects(self, version: str = "v1") -> List[Dict]:
         """
@@ -117,4 +117,4 @@ class ProjectAPI(BaseAPI):
             List of authorized projects
         """
         endpoint = f"{version}/projects/created-and-authed" if version == "v2" else "projects/created-and-authed"
-        return self._get_request(endpoint, "List user projects")
+        return self._get_request(endpoint, operation_name="List user projects")
